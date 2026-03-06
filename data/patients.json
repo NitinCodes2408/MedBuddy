@@ -1,0 +1,20 @@
+[
+  {
+    "id": 6034,
+    "email": "test@gmail.com",
+    "password": "1234",
+    "createdAt": "2026-02-17T11:56:21.152Z"
+  },
+  {
+    "id": 4607,
+    "email": "nitubhandare2004@gmail.com",
+    "password": "Pass@123",
+    "createdAt": "2026-02-17T12:00:13.142Z"
+  },
+  {
+    "id": 4946,
+    "email": "nitubhandare@gmail.com",
+    "password": "Pass@123",
+    "createdAt": "2026-02-17T12:01:34.869Z"
+  }
+]
