@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MedBuddy | Login</title>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Segoe UI", Arial, sans-serif;
+    }
+
+    body {
+      height: 100vh;
+      background: linear-gradient(135deg, #eafff2, #ffffff, #d7ffe9);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .login-box {
+      width: 420px;
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 18px;
+      padding: 30px;
+      box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.12);
+      border: 1px solid rgba(0, 128, 0, 0.15);
+      backdrop-filter: blur(15px);
+      animation: fadeIn 0.8s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(25px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0px);
+      }
+    }
+
+    h2 {
+      text-align: center;
+      color: #0f5132;
+      margin-bottom: 10px;
+      font-size: 38px;
+      font-weight: 800;
+      text-shadow: 1px 2px 6px rgba(0, 0, 0, 0.15);
+    }
+
+    p {
+      text-align: center;
+      color: #4b5563;
+      font-size: 18px;
+      margin-bottom: 25px;
+      font-weight: 600;
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      margin-top: 15px;
+      margin-bottom: 6px;
+      color: #14532d;
+      font-size: 14px;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(0, 128, 0, 0.25);
+      outline: none;
+      font-size: 15px;
+      background: rgba(255, 255, 255, 0.95);
+      transition: 0.3s ease;
+    }
+
+    input:focus {
+      border-color: #00c853;
+      box-shadow: 0px 0px 12px rgba(0, 200, 83, 0.35);
+    }
+
+    /* ✅ CUSTOM DROPDOWN */
+    .custom-select {
+      position: relative;
+      width: 100%;
+      user-select: none;
+    }
+
+    .select-box {
+      width: 100%;
+      padding: 12px 45px 12px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(0, 128, 0, 0.25);
+      background: rgba(255, 255, 255, 0.95);
+      cursor: pointer;
+      font-size: 15px;
+      color: #333;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      box-shadow: inset 0px 2px 6px rgba(0, 0, 0, 0.08),
+        0px 6px 16px rgba(0, 0, 0, 0.12);
+      transition: 0.3s ease;
+    }
+
+    .select-box:hover {
+      transform: translateY(-1px);
+      box-shadow: inset 0px 2px 6px rgba(0, 0, 0, 0.10),
+        0px 8px 18px rgba(0, 0, 0, 0.18);
+    }
+
+    .arrow {
+      width: 0;
+      height: 0;
+      border-left: 7px solid transparent;
+      border-right: 7px solid transparent;
+      border-top: 8px solid #00c853;
+      transition: 0.3s ease;
+    }
+
+    .custom-select.active .arrow {
+      transform: rotate(180deg);
+    }
+
+    .options {
+      position: absolute;
+      top: 110%;
+      left: 0;
+      width: 100%;
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0px 10px 25px rgba(0, 0, 0, 0.15);
+      border: 1px solid rgba(0, 128, 0, 0.15);
+      display: none;
+      z-index: 999;
+      animation: dropDown 0.25s ease;
+    }
+
+    @keyframes dropDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0px);
+      }
+    }
+
+    .custom-select.active .options {
+      display: block;
+    }
+
+    .option {
+      padding: 12px;
+      font-size: 15px;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+
+    .option:hover {
+      background: rgba(0, 200, 83, 0.15);
+      font-weight: bold;
+      color: #0f5132;
+    }
+
+    button {
+      margin-top: 22px;
+      width: 100%;
+      padding: 13px;
+      border: none;
+      border-radius: 14px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      background: linear-gradient(135deg, #00c853);
+      color: white;
+      box-shadow: 0px 10px 25px rgba(0, 200, 83, 0.30);
+      transition: 0.3s ease;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0px 14px 30px rgba(0, 200, 83, 0.40);
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    .msg {
+      margin-top: 15px;
+      text-align: center;
+      font-size: 14px;
+      font-weight: 600;
+      color: red;
+    }
+
+    .tip {
+      margin-top: 12px;
+      font-size: 12px;
+      text-align: center;
+      color: #14532d;
+      font-weight: 600;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="login-box">
+    <h2>MedBuddy</h2>
+    <p>Login Panel</p>
+
+    <label>Login As</label>
+
+    <!-- Custom Dropdown -->
+    <div class="custom-select" id="customSelect">
+      <div class="select-box" onclick="toggleDropdown()">
+        <span id="selectedRole">Select Role</span>
+        <div class="arrow"></div>
+      </div>
+
+      <div class="options">
+        <div class="option" onclick="selectRole('patient')">Patient</div>
+        <div class="option" onclick="selectRole('doctor')">Doctor</div>
+      </div>
+    </div>
+
+    <label>Email</label>
+    <input type="email" id="email" placeholder="Enter your email" />
+
+    <label>Password</label>
+    <input type="password" id="password" placeholder="Enter password" />
+
+    <button onclick="loginUser()">Login</button>
+
+    <div class="msg" id="msg"></div>
+
+    <!-- <div class="tip">Demo Login: Any Email + Any Password Allowed</div> -->
+  </div>
+
+  <script>
+    let role = "";
+
+    // ================= AUTO REDIRECT =================
+    const savedRole = localStorage.getItem("roleLoggedIn");
+
+    if (savedRole === "patient") {
+      window.location.href = "./patient.html";
+    }
+    else if (savedRole === "doctor") {
+      window.location.href = "./doctor.html";
+    }
+
+    function toggleDropdown() {
+      document.getElementById("customSelect").classList.toggle("active");
+    }
+
+    function selectRole(selected) {
+      role = selected;
+
+      document.getElementById("selectedRole").innerText =
+        selected === "patient" ? "Patient" : "Doctor";
+
+      document.getElementById("customSelect").classList.remove("active");
+    }
+
+    // Close dropdown if clicked outside
+    document.addEventListener("click", function (e) {
+      const dropdown = document.getElementById("customSelect");
+      if (!dropdown.contains(e.target)) {
+        dropdown.classList.remove("active");
+      }
+    });
+
+    // ================= LOGIN FUNCTION =================
+    function loginUser() {
+
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+      const msg = document.getElementById("msg");
+
+      if (!role || !email || !password) {
+        msg.style.color = "red";
+        msg.innerText = "⚠️ Please select role and fill all fields";
+        return;
+      }
+
+      // Clear old data first
+      localStorage.clear();
+
+      if (role === "patient") {
+        localStorage.setItem("roleLoggedIn", "patient");
+        localStorage.setItem("patientEmail", email);
+      }
+      else if (role === "doctor") {
+        localStorage.setItem("roleLoggedIn", "doctor");
+        localStorage.setItem("doctorEmail", email);  // ✅ IMPORTANT
+      }
+
+      msg.style.color = "green";
+      msg.innerText = "✅ Login Successful! Redirecting...";
+
+      setTimeout(() => {
+        if (role === "patient") {
+          window.location.href = "./patient.html";
+        } else {
+          window.location.href = "./doctor.html";
+        }
+      }, 1000);
+    }
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MedBuddy | Doctor Panel</title>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Segoe UI", sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #eafff2, #ffffff, #d7ffe9);
+      display: flex;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      width: 1200px;
+      background: #fff;
+      border-radius: 18px;
+      padding: 30px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    h2 {
+      color: #0f5132;
+    }
+
+    .logoutBtn {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 10px;
+      background: #ef4444;
+      color: #fff;
+      cursor: pointer;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+
+    th,
+    td {
+      padding: 10px;
+      border-bottom: 1px solid #e5e7eb;
+      font-size: 14px;
+    }
+
+    th {
+      background: #00c853;
+      color: #fff;
+    }
+
+    .statusPending {
+      color: orange;
+      font-weight: bold;
+    }
+
+    .statusApproved {
+      color: green;
+      font-weight: bold;
+    }
+
+    button.smallBtn {
+      padding: 5px 10px;
+      font-size: 12px;
+      margin-right: 5px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .editBtn {
+      background: #f59e0b;
+      color: #fff;
+    }
+
+    .deleteBtn {
+      background: #ef4444;
+      color: #fff;
+    }
+
+    .formBox {
+      margin-top: 25px;
+      background: #f3fff8;
+      padding: 20px;
+      border-radius: 12px;
+    }
+
+    input,
+    textarea {
+      width: 100%;
+      padding: 10px;
+      margin-top: 8px;
+      margin-bottom: 12px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+
+    .mainBtn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      background: #00c853;
+      color: #fff;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .responseBox {
+      margin-top: 15px;
+      background: #fff;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      min-height: 60px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+
+    <div class="topbar">
+      <h2>MedBuddy Doctor Panel</h2>
+      <button class="logoutBtn" onclick="logoutDoctor()">Logout</button>
+    </div>
+
+    <h3>Patient Requests</h3>
+
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Mobile</th>
+          <th>Age</th>
+          <th>Gender</th>
+          <th>Symptoms</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="requestTable">
+        <tr>
+          <td colspan="8">Loading...</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="formBox">
+      <h3 id="formTitle">Add Prescription</h3>
+
+      <input type="hidden" id="editPrescriptionId" />
+
+      <label>Request ID</label>
+      <input type="text" id="requestId" readonly />
+
+      <label>Doctor Name</label>
+      <input type="text" id="doctorName" />
+
+      <label>Medicine</label>
+      <input type="text" id="medicine" />
+
+      <label>Dosage</label>
+      <input type="text" id="dosage" />
+
+      <label>Days</label>
+      <input type="number" id="days" />
+
+      <label>Advice</label>
+      <textarea id="advice"></textarea>
+
+      <button class="mainBtn" onclick="submitPrescription()">Submit</button>
+
+      <div class="responseBox" id="responseBox"></div>
+
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = "http://localhost:5000";
+    const doctorEmail = localStorage.getItem("doctorEmail");
+    let editMode = false;
+
+    if (localStorage.getItem("roleLoggedIn") !== "doctor" || !doctorEmail) {
+      window.location.href = "./patient-login.html";
+    }
+
+    function logoutDoctor() {
+      localStorage.clear();
+      window.location.href = "./patient-login.html";
+    }
+
+    async function loadRequests() {
+      const table = document.getElementById("requestTable");
+
+      try {
+        const res = await fetch(`${API_BASE}/api/doctor/requests`);
+        const data = await res.json();
+
+        const filtered = data.filter(r => r.assignedDoctor === doctorEmail);
+
+        if (!filtered.length) {
+          table.innerHTML = `<tr><td colspan="8">No assigned requests</td></tr>`;
+          return;
+        }
+
+        table.innerHTML = "";
+
+        filtered.reverse().forEach(req => {
+
+          const actions = req.status === "Approved"
+            ? `<button class="smallBtn editBtn" onclick="editPrescription(${req.id});event.stopPropagation()">Edit</button>
+        <button class="smallBtn deleteBtn" onclick="deletePrescription(${req.id});event.stopPropagation()">Delete</button>`
+            : "-";
+
+          const row = document.createElement("tr");
+          row.innerHTML = `
+        <td>${req.id}</td>
+        <td>${req.patientName}</td>
+        <td>${req.mobile}</td>
+        <td>${req.age}</td>
+        <td>${req.gender}</td>
+        <td>${req.symptoms}</td>
+        <td class="${req.status === "Approved" ? "statusApproved" : "statusPending"}">${req.status}</td>
+        <td>${actions}</td>
+      `;
+
+          row.onclick = () => {
+            if (req.status === "Approved") return;
+            document.getElementById("requestId").value = req.id;
+            // document.getElementById("doctorName").value=doctorEmail;
+          };
+
+          table.appendChild(row);
+        });
+
+      } catch {
+        table.innerHTML = `<tr><td colspan="8">Server Error</td></tr>`;
+      }
+    }
+
+    async function submitPrescription() {
+
+      const requestId = document.getElementById("requestId").value;
+      const doctorName = document.getElementById("doctorName").value;
+      const medicine = document.getElementById("medicine").value;
+      const dosage = document.getElementById("dosage").value;
+      const days = document.getElementById("days").value;
+      const advice = document.getElementById("advice").value;
+      const editId = document.getElementById("editPrescriptionId").value;
+
+      if (!requestId || !doctorName || !medicine || !dosage || !days) {
+        alert("Fill all fields");
+        return;
+      }
+
+      let url = `${API_BASE}/api/doctor/prescribe`;
+      let method = "POST";
+
+      if (editMode) {
+        url = `${API_BASE}/api/doctor/prescription/${editId}`;
+        method = "PUT";
+      }
+
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ requestId, doctorName, medicine, dosage, days, advice })
+      });
+
+      const data = await res.json();
+      document.getElementById("responseBox").innerText = data.message;
+
+      editMode = false;
+      document.getElementById("formTitle").innerText = "Add Prescription";
+      document.getElementById("editPrescriptionId").value = "";
+      loadRequests();
+    }
+
+    async function editPrescription(id) {
+
+      const res = await fetch(`${API_BASE}/api/patient/prescription/${id}`);
+      if (!res.ok) return;
+
+      const data = await res.json();
+
+      editMode = true;
+      document.getElementById("formTitle").innerText = "Edit Prescription";
+      document.getElementById("editPrescriptionId").value = data.id;
+      document.getElementById("requestId").value = data.requestId;
+      document.getElementById("doctorName").value = data.doctorName;
+      document.getElementById("medicine").value = data.medicine;
+      document.getElementById("dosage").value = data.dosage;
+      document.getElementById("days").value = data.days;
+      document.getElementById("advice").value = data.advice;
+    }
+
+    async function deletePrescription(id) {
+      if (!confirm("Delete this prescription?")) return;
+
+      const res = await fetch(`${API_BASE}/api/doctor/prescription/${id}`, {
+        method: "DELETE"
+      });
+
+      const data = await res.json();
+      alert(data.message);
+      loadRequests();
+    }
+
+    loadRequests();
+  </script>
+
+</body>
+
+</html>
