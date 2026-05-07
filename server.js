@@ -8,19 +8,28 @@ const { Server } = require("socket.io");
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// ================= HTTP SERVER + SOCKET =================
+// ================= HTTP SERVER =================
 const server = http.createServer(app);
 
+// ================= SOCKET.IO =================
 const io = new Server(server, {
   cors: {
     origin: "*"
   }
 });
 
+// ================= SOCKET CONNECTION =================
+io.on("connection", (socket) => {
+  console.log("🔌 User connected:", socket.id);
+});
+
 // ================= MIDDLEWARE =================
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// ================= STATIC FILES =================
+app.use(express.static(path.join(__dirname, "views")));
 
 // ================= FILE PATHS =================
 const requestsFile = path.join(__dirname, "data", "requests.json");
@@ -32,6 +41,7 @@ function generateId() {
 }
 
 function readJSON(filePath) {
+
   if (!fs.existsSync(filePath)) {
     fs.writeFileSync(filePath, JSON.stringify([]));
   }
@@ -47,9 +57,17 @@ function writeJSON(filePath, data) {
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
 }
 
-// ================= HOME ROUTE =================
+// ================= FRONTEND ROUTES =================
 app.get("/", (req, res) => {
-  res.send("✅ MedBuddy Backend Running!");
+  res.sendFile(path.join(__dirname, "views", "index.html"));
+});
+
+app.get("/patient", (req, res) => {
+  res.sendFile(path.join(__dirname, "views", "patient.html"));
+});
+
+app.get("/doctor", (req, res) => {
+  res.sendFile(path.join(__dirname, "views", "doctor.html"));
 });
 
 // ================= PATIENT REQUEST =================
@@ -264,12 +282,8 @@ app.delete("/api/doctor/prescription/:id", (req, res) => {
 });
 
 // ================= START SERVER =================
-if (process.env.NODE_ENV !== "production") {
-
-  server.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
-  });
-
-}
+server.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+});
 
 module.exports = app;
