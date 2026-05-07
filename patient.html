@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MedBuddy | Patient Panel</title>
+
+  <!-- jsPDF CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Segoe UI", Arial, sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #eafff2, #ffffff, #d7ffe9);
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    .container {
+      width: 1100px;
+      max-width: 100%;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(15px);
+      border-radius: 18px;
+      padding: 35px;
+      margin-top: 20px;
+      box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.55);
+      border: 1px solid rgba(0, 128, 0, 0.15);
+      display: flex;
+      gap: 30px;
+      animation: fadeIn 0.8s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(25px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0px);
+      }
+    }
+
+    .left {
+      flex: 1;
+    }
+
+    .right {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .panel {
+      background: #f3fff8;
+      border-radius: 15px;
+      padding: 20px;
+      border: 1px solid rgba(0, 128, 0, 0.15);
+      box-shadow: inset 0px 0px 10px rgba(0, 128, 0, 0.05);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 15px;
+    }
+
+    .logo-icon {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, #00c853);
+      border-radius: 14px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 30px;
+      color: white;
+      font-weight: bold;
+      box-shadow: 0px 6px 15px rgba(0, 200, 83, 0.3);
+    }
+
+    .logo h2 {
+      font-size: 28px;
+      font-weight: 800;
+      color: #0f5132;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: #4b5563;
+      margin-bottom: 25px;
+      line-height: 1.6;
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      margin-top: 15px;
+      margin-bottom: 6px;
+      color: #14532d;
+      font-size: 14px;
+    }
+
+    input,
+    textarea,
+    select {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(0, 128, 0, 0.2);
+      outline: none;
+      font-size: 15px;
+      background: rgba(255, 255, 255, 0.95);
+      transition: 0.3s ease;
+    }
+
+    input:focus,
+    textarea:focus,
+    select:focus {
+      border-color: #00c853;
+      box-shadow: 0px 0px 10px rgba(0, 200, 83, 0.25);
+    }
+
+    textarea {
+      resize: none;
+      height: 120px;
+    }
+
+    .btn {
+      margin-top: 18px;
+      width: 100%;
+      padding: 13px;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      background: linear-gradient(135deg, #00c853);
+      color: white;
+      box-shadow: 0px 8px 20px rgba(0, 200, 83, 0.25);
+      transition: 0.3s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0px 12px 25px rgba(0, 200, 83, 0.35);
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn2 {
+      background: linear-gradient(135deg, #16a34a, #4ade80);
+    }
+
+    .btnLogout {
+      margin-top: 12px;
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+      background: linear-gradient(135deg, #ef4444, #f87171);
+      color: white;
+      box-shadow: 0px 8px 20px rgba(239, 68, 68, 0.25);
+      transition: 0.3s ease;
+    }
+
+    .btnLogout:hover {
+      transform: translateY(-2px);
+      box-shadow: 0px 12px 25px rgba(239, 68, 68, 0.35);
+    }
+
+    h3 {
+      color: #0f5132;
+      font-size: 18px;
+      margin-bottom: 10px;
+      font-weight: 800;
+    }
+
+    .responseBox {
+      width: 100%;
+      background: white;
+      border-radius: 12px;
+      padding: 15px;
+      font-size: 13px;
+      border: 1px solid rgba(0, 128, 0, 0.15);
+      height: 260px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      color: #1f2937;
+    }
+
+    .tip {
+      margin-top: 12px;
+      font-size: 13px;
+      color: #14532d;
+      background: rgba(0, 200, 83, 0.08);
+      padding: 10px;
+      border-radius: 10px;
+      border-left: 4px solid #00c853;
+    }
+
+    .footer {
+      margin-top: 18px;
+      font-size: 12px;
+      text-align: center;
+      color: #6b7280;
+    }
+
+    @media (max-width: 850px) {
+      .container {
+        flex-direction: column;
+      }
+
+      .responseBox {
+        height: 200px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+
+    <!-- LEFT SIDE -->
+    <div class="left">
+      <div class="logo">
+        <div class="logo-icon">+</div>
+        <h2>MedBuddy</h2>
+      </div>
+
+      <p class="subtitle">
+        Submit your symptoms. Doctor will review and provide prescription.
+      </p>
+
+      <label>Patient Name</label>
+      <input type="text" id="patientName" placeholder="Enter patient name..." />
+
+      <label>Mobile Number</label>
+      <input type="text" id="mobile" placeholder="Enter mobile number..." />
+
+      <label>Age</label>
+      <input type="number" id="age" placeholder="Enter age..." />
+
+      <label>Gender</label>
+      <select id="gender">
+        <option value="">Select Gender</option>
+        <option value="Male">Male</option>
+        <option value="Female">Female</option>
+        <option value="Other">Other</option>
+      </select>
+
+      <label>Select Doctor</label>
+      <select id="assignedDoctor">
+        <option value="">Select Doctor</option>
+        <option value="dr.vedant@gmail.com">Dr. Vedant Bhandare</option>
+        <option value="dr.priya@gmail.com">Dr. Priya Jain</option>
+        <option value="dr.prakash@gmail.com">Dr. Prakash Khobragade</option>
+        <option value="dr.milind@gmail.com">Dr. Milind Thaware</option>
+      </select>
+
+
+      <label>Symptoms</label>
+      <textarea id="symptoms" placeholder="Example: fever, headache, cough..."></textarea>
+
+      <button class="btn" onclick="sendRequest()">Submit Request</button>
+
+      <button class="btnLogout" onclick="logout()">Logout</button>
+
+      <div class="footer">© 2026 MedBuddy | Patient Panel</div>
+    </div>
+
+    <!-- RIGHT SIDE -->
+    <div class="right">
+
+      <!-- Get Prescription Panel -->
+      <div class="panel">
+        <h3>💊 Get Prescription</h3>
+
+        <label>Enter Request ID</label>
+        <input type="number" id="requestId" placeholder="Example: 1234" />
+
+        <button class="btn btn2" onclick="getPrescription()">Get Prescription</button>
+      </div>
+
+      <!-- Response Panel -->
+      <div class="panel">
+        <h3>💊 Doctor's Prescription</h3>
+
+        <div class="responseBox" id="responseBox">
+          Response will appear here...
+        </div>
+
+        <button class="btn" style="margin-top: 15px;" onclick="downloadPrescriptionPDF()">
+          ⬇️ Download Prescription (PDF)
+        </button>
+
+        <div class="tip">
+          ✅ Tip: Afetr submitting the request, use the generated Request ID to fetch your prescription.
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+
+    // ===== NEW UPDATE =====
+    // Auto detect Localhost or Live server
+    const API_BASE =
+      location.hostname === "127.0.0.1" || location.hostname === "localhost"
+        ? "http://localhost:5000"
+        : "https://medbuddy-fs9v.onrender.com";
+
+
+    // ===== NEW UPDATE =====
+    // Socket connection dynamic
+    const socket = io(API_BASE);
+
+
+    socket.on("prescriptionApproved", (data) => {
+
+      const responseBox = document.getElementById("responseBox");
+
+      responseBox.innerHTML = `
+      <div style="text-align:center;color:#14532d;">
+        <h3>🔔 Prescription Ready</h3>
+        <p>Your request has been approved by doctor.</p>
+        <p><b>Request ID:</b> ${data.requestId}</p>
+        <p>You can now download your prescription.</p>
+      </div>
+    `;
+
+      alert(`🔔 Your prescription is ready!\nRequest ID: ${data.requestId}`);
+
+    });
+
+
+    let lastPrescriptionData = null;
+
+
+    // ===== NEW UPDATE =====
+    // Login check redirect fixed
+    if (localStorage.getItem("roleLoggedIn") !== "patient") {
+      window.location.href = "./index.html";
+    }
+
+
+    // LOGOUT
+    function logout() {
+
+      localStorage.removeItem("roleLoggedIn");
+
+      // ===== NEW UPDATE =====
+      window.location.href = "./index.html";
+
+    }
+
+
+    // ================= SEND REQUEST =================
+    async function sendRequest() {
+
+      const patientName = document.getElementById("patientName").value.trim();
+      const mobile = document.getElementById("mobile").value.trim();
+      const age = document.getElementById("age").value.trim();
+      const gender = document.getElementById("gender").value;
+      const assignedDoctor = document.getElementById("assignedDoctor").value;
+      const symptoms = document.getElementById("symptoms").value.trim();
+      const responseBox = document.getElementById("responseBox");
+
+      if (!patientName || !mobile || !age || !gender || !assignedDoctor || !symptoms) {
+        responseBox.innerText = "⚠️ Please fill all fields";
+        return;
+      }
+
+      responseBox.innerText = "⏳ Sending request...";
+
+      try {
+
+        // ===== NEW UPDATE =====
+        const res = await fetch(`${API_BASE}/api/patient/request`, {
+
+          method: "POST",
+
+          headers: { "Content-Type": "application/json" },
+
+          body: JSON.stringify({
+            patientName,
+            mobile,
+            age,
+            gender,
+            symptoms,
+            assignedDoctor
+          })
+
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          responseBox.innerText = data.message || "❌ Request failed";
+          return;
+        }
+
+        const requestId = data.data.id;
+
+        responseBox.innerHTML = `
+      <div style="text-align:center; line-height:1.8;">
+        <h3 style="color:#14532d;">✅ Request Submitted Successfully</h3>
+        <p>Your Request ID:</p>
+        <div style="
+          font-size:22px;
+          font-weight:bold;
+          background:#e6f9ef;
+          padding:10px;
+          border-radius:10px;
+          display:inline-block;
+          color:#0f5132;
+        ">
+          ${requestId}
+        </div>
+        <p style="margin-top:10px;">
+          📲 Doctor will notify you after approval.
+        </p>
+      </div>
+    `;
+
+        document.getElementById("requestId").value = requestId;
+
+      } catch (error) {
+
+        responseBox.innerText = "❌ Error: Server not running / CORS issue";
+
+      }
+
+    }
+
+
+
+    // ================= GET PRESCRIPTION =================
+    async function getPrescription() {
+
+      const requestId = document.getElementById("requestId").value;
+      const responseBox = document.getElementById("responseBox");
+
+      if (!requestId) {
+        responseBox.innerText = "⚠️ Please enter Request ID";
+        return;
+      }
+
+      responseBox.innerText = "⏳ Fetching prescription...";
+
+      try {
+
+        // ===== NEW UPDATE =====
+        const res = await fetch(`${API_BASE}/api/patient/prescription/${requestId}`);
+
+        if (!res.ok) {
+
+          lastPrescriptionData = null;
+
+          responseBox.innerHTML = `<b style="color:red;">❌ Prescription not found</b>`;
+
+          return;
+
+        }
+
+        const data = await res.json();
+
+        lastPrescriptionData = data;
+
+        const dateObj = new Date(data.createdAt);
+        const date = dateObj.toLocaleDateString("en-GB");
+        const time = dateObj.toLocaleTimeString("en-IN", { hour12: false });
+
+        responseBox.innerHTML = `
+      <div style="font-size:15px; line-height:1.8;">
+        <h2>💊 Prescription Report</h2>
+        <p><b>Request ID:</b> ${data.requestId}</p>
+        <p><b>Prescription ID:</b> ${data.id}</p>
+        <hr>
+        <p><b>Name:</b> ${data.patientName}</p>
+        <p><b>Mobile:</b> ${data.mobile}</p>
+        <p><b>Age:</b> ${data.age}</p>
+        <p><b>Gender:</b> ${data.gender}</p>
+        <p><b>Symptoms:</b> ${data.symptoms}</p>
+        <hr>
+        <p><b>Doctor:</b> ${data.doctorName}</p>
+        <p><b>Medicine:</b> ${data.medicine}</p>
+        <p><b>Dosage:</b> ${data.dosage}</p>
+        <p><b>Days:</b> ${data.days}</p>
+        <p><b>Advice:</b> ${data.advice || "No advice"}</p>
+        <hr>
+        <p><b>Date:</b> ${date}</p>
+        <p><b>Time:</b> ${time}</p>
+      </div>
+    `;
+
+      } catch (error) {
+
+        responseBox.innerHTML = `<b style="color:red;">❌ Server error</b>`;
+
+      }
+
+    }
+
+    // ================= DOWNLOAD PRESCRIPTION PDF =================
+    function downloadPrescriptionPDF() {
+      if (!lastPrescriptionData) {
+        alert("⚠️ No prescription to download. Please get prescription first.");
+        return;
+      }
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+
+      const data = lastPrescriptionData;
+      const dateObj = new Date(data.createdAt || Date.now());
+      const date = dateObj.toLocaleDateString("en-GB");
+      const time = dateObj.toLocaleTimeString("en-IN", { hour12: false });
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(22);
+      doc.setTextColor(15, 81, 50);
+      doc.text("MedBuddy - Prescription", 105, 20, null, null, "center");
+
+      doc.setFontSize(12);
+      doc.setTextColor(0, 0, 0);
+      doc.setFont("helvetica", "normal");
+
+      let y = 40;
+      doc.text(`Request ID: ${data.requestId}`, 20, y);
+      doc.text(`Prescription ID: ${data.id || 'N/A'}`, 120, y);
+
+      y += 10;
+      doc.line(20, y, 190, y);
+      y += 10;
+
+      doc.setFont("helvetica", "bold");
+      doc.text("Patient Details", 20, y);
+      doc.setFont("helvetica", "normal");
+      y += 10;
+      doc.text(`Name: ${data.patientName || 'N/A'}`, 20, y);
+      doc.text(`Age: ${data.age || 'N/A'}`, 120, y);
+      y += 10;
+      doc.text(`Gender: ${data.gender || 'N/A'}`, 20, y);
+      doc.text(`Mobile: ${data.mobile || 'N/A'}`, 120, y);
+      y += 10;
+
+      // Handle multi-line symptoms
+      const symptomsLines = doc.splitTextToSize(`Symptoms: ${data.symptoms || 'N/A'}`, 170);
+      doc.text(symptomsLines, 20, y);
+      y += (symptomsLines.length * 7);
+
+      y += 5;
+      doc.line(20, y, 190, y);
+      y += 10;
+
+      doc.setFont("helvetica", "bold");
+      doc.text("Prescription Details", 20, y);
+      doc.setFont("helvetica", "normal");
+      y += 10;
+      doc.text(`Doctor: ${data.doctorName || 'N/A'}`, 20, y);
+      y += 10;
+
+      const medicineLines = doc.splitTextToSize(`Medicine: ${data.medicine || 'N/A'}`, 170);
+      doc.text(medicineLines, 20, y);
+      y += (medicineLines.length * 7);
+
+      doc.text(`Dosage: ${data.dosage || 'N/A'}`, 20, y);
+      y += 10;
+      doc.text(`Days: ${data.days || 'N/A'}`, 20, y);
+      y += 10;
+
+      const adviceLines = doc.splitTextToSize(`Advice: ${data.advice || 'None'}`, 170);
+      doc.text(adviceLines, 20, y);
+      y += (adviceLines.length * 7);
+
+      y += 5;
+      doc.line(20, y, 190, y);
+      y += 10;
+
+      doc.text(`Date: ${date}`, 20, y);
+      doc.text(`Time: ${time}`, 120, y);
+
+      doc.save(`Prescription_${data.requestId}.pdf`);
+    }
+
+  </script>
+
+</body>
+
+</html>
