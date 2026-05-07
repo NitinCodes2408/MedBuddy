@@ -4,10 +4,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <title>MedBuddy | Patient Panel</title>
 
-  <!-- jsPDF CDN -->
+  <!-- jsPDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <!-- Socket.IO -->
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 
   <style>
@@ -36,7 +39,7 @@
       border-radius: 18px;
       padding: 35px;
       margin-top: 20px;
-      box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.55);
+      box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.25);
       border: 1px solid rgba(0, 128, 0, 0.15);
       display: flex;
       gap: 30px;
@@ -162,10 +165,6 @@
       box-shadow: 0px 12px 25px rgba(0, 200, 83, 0.35);
     }
 
-    .btn:active {
-      transform: scale(0.98);
-    }
-
     .btn2 {
       background: linear-gradient(135deg, #16a34a, #4ade80);
     }
@@ -182,19 +181,6 @@
       background: linear-gradient(135deg, #ef4444, #f87171);
       color: white;
       box-shadow: 0px 8px 20px rgba(239, 68, 68, 0.25);
-      transition: 0.3s ease;
-    }
-
-    .btnLogout:hover {
-      transform: translateY(-2px);
-      box-shadow: 0px 12px 25px rgba(239, 68, 68, 0.35);
-    }
-
-    h3 {
-      color: #0f5132;
-      font-size: 18px;
-      margin-bottom: 10px;
-      font-weight: 800;
     }
 
     .responseBox {
@@ -240,10 +226,12 @@
 </head>
 
 <body>
+
   <div class="container">
 
-    <!-- LEFT SIDE -->
+    <!-- LEFT -->
     <div class="left">
+
       <div class="logo">
         <div class="logo-icon">+</div>
         <h2>MedBuddy</h2>
@@ -271,138 +259,262 @@
       </select>
 
       <label>Select Doctor</label>
+
       <select id="assignedDoctor">
         <option value="">Select Doctor</option>
-        <option value="dr.vedant@gmail.com">Dr. Vedant Bhandare</option>
-        <option value="dr.priya@gmail.com">Dr. Priya Jain</option>
-        <option value="dr.prakash@gmail.com">Dr. Prakash Khobragade</option>
-        <option value="dr.milind@gmail.com">Dr. Milind Thaware</option>
+        <option value="dr.vedant@gmail.com">
+          Dr. Vedant Bhandare
+        </option>
+
+        <option value="dr.priya@gmail.com">
+          Dr. Priya Jain
+        </option>
+
+        <option value="dr.prakash@gmail.com">
+          Dr. Prakash Khobragade
+        </option>
+
+        <option value="dr.milind@gmail.com">
+          Dr. Milind Thaware
+        </option>
       </select>
 
-
       <label>Symptoms</label>
-      <textarea id="symptoms" placeholder="Example: fever, headache, cough..."></textarea>
 
-      <button class="btn" onclick="sendRequest()">Submit Request</button>
+      <textarea
+        id="symptoms"
+        placeholder="Example: fever, headache, cough..."
+      ></textarea>
 
-      <button class="btnLogout" onclick="logout()">Logout</button>
+      <button class="btn" onclick="sendRequest()">
+        Submit Request
+      </button>
 
-      <div class="footer">© 2026 MedBuddy | Patient Panel</div>
+      <button class="btnLogout" onclick="logout()">
+        Logout
+      </button>
+
+      <div class="footer">
+        © 2026 MedBuddy | Patient Panel
+      </div>
+
     </div>
 
-    <!-- RIGHT SIDE -->
+    <!-- RIGHT -->
     <div class="right">
 
-      <!-- Get Prescription Panel -->
       <div class="panel">
+
         <h3>💊 Get Prescription</h3>
 
         <label>Enter Request ID</label>
-        <input type="number" id="requestId" placeholder="Example: 1234" />
 
-        <button class="btn btn2" onclick="getPrescription()">Get Prescription</button>
+        <input
+          type="number"
+          id="requestId"
+          placeholder="Example: 1234"
+        />
+
+        <button class="btn btn2" onclick="getPrescription()">
+          Get Prescription
+        </button>
+
       </div>
 
-      <!-- Response Panel -->
+
       <div class="panel">
+
         <h3>💊 Doctor's Prescription</h3>
 
         <div class="responseBox" id="responseBox">
           Response will appear here...
         </div>
 
-        <button class="btn" style="margin-top: 15px;" onclick="downloadPrescriptionPDF()">
+        <button
+          class="btn"
+          style="margin-top:15px;"
+          onclick="downloadPrescriptionPDF()"
+        >
           ⬇️ Download Prescription (PDF)
         </button>
 
         <div class="tip">
-          ✅ Tip: Afetr submitting the request, use the generated Request ID to fetch your prescription.
+          ✅ Tip: After submitting the request, use the generated
+          Request ID to fetch your prescription.
         </div>
+
       </div>
 
     </div>
+
   </div>
 
-  <script>
 
-    // ===== NEW UPDATE =====
-    // Auto detect Localhost or Live server
-    const API_BASE =
-      location.hostname === "127.0.0.1" || location.hostname === "localhost"
-        ? "http://localhost:5000"
-        : "https://medbuddy-fs9v.onrender.com";
+  <!-- ================= NEW UPDATE ================= -->
+<script>
+
+  /* =========================================================
+     AUTO DETECT LOCAL / LIVE BACKEND
+  ========================================================= */
+
+  const API_BASE =
+    location.hostname === "127.0.0.1" ||
+    location.hostname === "localhost"
+      ? "http://localhost:5000"
+      : "https://medbuddy-fs9v.onrender.com";
 
 
-    // ===== NEW UPDATE =====
-    // Socket connection dynamic
-    const socket = io(API_BASE);
+  /* =========================================================
+     SOCKET CONNECTION
+  ========================================================= */
+
+  const socket = io(API_BASE, {
+    transports: ["websocket", "polling"]
+  });
 
 
-    socket.on("prescriptionApproved", (data) => {
+  /* =========================================================
+     SOCKET STATUS
+  ========================================================= */
 
-      const responseBox = document.getElementById("responseBox");
+  socket.on("connect", () => {
 
-      responseBox.innerHTML = `
+    console.log("✅ Connected to server");
+
+  });
+
+
+  socket.on("connect_error", () => {
+
+    console.log("❌ Socket connection failed");
+
+  });
+
+
+  /* =========================================================
+     PRESCRIPTION APPROVED NOTIFICATION
+  ========================================================= */
+
+  socket.on("prescriptionApproved", (data) => {
+
+    const responseBox =
+      document.getElementById("responseBox");
+
+    responseBox.innerHTML = `
       <div style="text-align:center;color:#14532d;">
+        
         <h3>🔔 Prescription Ready</h3>
-        <p>Your request has been approved by doctor.</p>
-        <p><b>Request ID:</b> ${data.requestId}</p>
-        <p>You can now download your prescription.</p>
+
+        <p>
+          Your request has been approved by doctor.
+        </p>
+
+        <p>
+          <b>Request ID:</b> ${data.requestId}
+        </p>
+
+        <p>
+          You can now download your prescription.
+        </p>
+
       </div>
     `;
 
-      alert(`🔔 Your prescription is ready!\nRequest ID: ${data.requestId}`);
+    alert(
+      `🔔 Your prescription is ready!\nRequest ID: ${data.requestId}`
+    );
 
-    });
+  });
 
 
-    let lastPrescriptionData = null;
+  let lastPrescriptionData = null;
 
 
-    // ===== NEW UPDATE =====
-    // Login check redirect fixed
-    if (localStorage.getItem("roleLoggedIn") !== "patient") {
-      window.location.href = "./index.html";
+  /* =========================================================
+     LOGIN CHECK
+  ========================================================= */
+
+  if (
+    localStorage.getItem("roleLoggedIn") !== "patient"
+  ) {
+
+    window.location.href = "./index.html";
+
+  }
+
+
+  /* =========================================================
+     LOGOUT
+  ========================================================= */
+
+  function logout() {
+
+    localStorage.removeItem("roleLoggedIn");
+
+    window.location.href = "./index.html";
+
+  }
+
+
+  /* =========================================================
+     SEND REQUEST
+  ========================================================= */
+
+  async function sendRequest() {
+
+    const patientName =
+      document.getElementById("patientName").value.trim();
+
+    const mobile =
+      document.getElementById("mobile").value.trim();
+
+    const age =
+      document.getElementById("age").value.trim();
+
+    const gender =
+      document.getElementById("gender").value;
+
+    const assignedDoctor =
+      document.getElementById("assignedDoctor").value;
+
+    const symptoms =
+      document.getElementById("symptoms").value.trim();
+
+    const responseBox =
+      document.getElementById("responseBox");
+
+
+    if (
+      !patientName ||
+      !mobile ||
+      !age ||
+      !gender ||
+      !assignedDoctor ||
+      !symptoms
+    ) {
+
+      responseBox.innerText =
+        "⚠️ Please fill all fields";
+
+      return;
     }
 
 
-    // LOGOUT
-    function logout() {
-
-      localStorage.removeItem("roleLoggedIn");
-
-      // ===== NEW UPDATE =====
-      window.location.href = "./index.html";
-
-    }
+    responseBox.innerText =
+      "⏳ Sending request...";
 
 
-    // ================= SEND REQUEST =================
-    async function sendRequest() {
+    try {
 
-      const patientName = document.getElementById("patientName").value.trim();
-      const mobile = document.getElementById("mobile").value.trim();
-      const age = document.getElementById("age").value.trim();
-      const gender = document.getElementById("gender").value;
-      const assignedDoctor = document.getElementById("assignedDoctor").value;
-      const symptoms = document.getElementById("symptoms").value.trim();
-      const responseBox = document.getElementById("responseBox");
-
-      if (!patientName || !mobile || !age || !gender || !assignedDoctor || !symptoms) {
-        responseBox.innerText = "⚠️ Please fill all fields";
-        return;
-      }
-
-      responseBox.innerText = "⏳ Sending request...";
-
-      try {
-
-        // ===== NEW UPDATE =====
-        const res = await fetch(`${API_BASE}/api/patient/request`, {
+      const res = await fetch(
+        `${API_BASE}/api/patient/request`,
+        {
 
           method: "POST",
 
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json"
+          },
 
           body: JSON.stringify({
             patientName,
@@ -413,200 +525,439 @@
             assignedDoctor
           })
 
+        }
+      );
+
+
+      const data = await res.json();
+
+
+      if (!res.ok) {
+
+        responseBox.innerText =
+          data.message || "❌ Request failed";
+
+        return;
+      }
+
+
+      const requestId = data.data.id;
+
+
+      responseBox.innerHTML = `
+        <div style="text-align:center;line-height:1.8;">
+
+          <h3 style="color:#14532d;">
+            ✅ Request Submitted Successfully
+          </h3>
+
+          <p>Your Request ID:</p>
+
+          <div style="
+            font-size:22px;
+            font-weight:bold;
+            background:#e6f9ef;
+            padding:10px;
+            border-radius:10px;
+            display:inline-block;
+            color:#0f5132;
+          ">
+            ${requestId}
+          </div>
+
+          <p style="margin-top:10px;">
+            📲 Doctor will notify you after approval.
+          </p>
+
+        </div>
+      `;
+
+
+      document.getElementById("requestId").value =
+        requestId;
+
+    } catch (error) {
+
+      console.log(error);
+
+      responseBox.innerText =
+        "⚠️ Backend server is starting. Please wait 30-60 seconds and try again.";
+
+    }
+
+  }
+
+
+  /* =========================================================
+     GET PRESCRIPTION
+  ========================================================= */
+
+  async function getPrescription() {
+
+    const requestId =
+      document.getElementById("requestId").value;
+
+    const responseBox =
+      document.getElementById("responseBox");
+
+
+    if (!requestId) {
+
+      responseBox.innerText =
+        "⚠️ Please enter Request ID";
+
+      return;
+    }
+
+
+    responseBox.innerText =
+      "⏳ Fetching prescription...";
+
+
+    try {
+
+      const res = await fetch(
+        `${API_BASE}/api/patient/prescription/${requestId}`
+      );
+
+
+      if (!res.ok) {
+
+        lastPrescriptionData = null;
+
+        responseBox.innerHTML = `
+          <b style="color:red;">
+            ❌ Prescription not found
+          </b>
+        `;
+
+        return;
+      }
+
+
+      const data = await res.json();
+
+      lastPrescriptionData = data;
+
+
+      const dateObj = new Date(data.createdAt);
+
+      const date =
+        dateObj.toLocaleDateString("en-GB");
+
+      const time =
+        dateObj.toLocaleTimeString("en-IN", {
+          hour12: false
         });
 
-        const data = await res.json();
 
-        if (!res.ok) {
-          responseBox.innerText = data.message || "❌ Request failed";
-          return;
-        }
+      responseBox.innerHTML = `
+        <div style="font-size:15px;line-height:1.8;">
 
-        const requestId = data.data.id;
+          <h2>💊 Prescription Report</h2>
 
-        responseBox.innerHTML = `
-      <div style="text-align:center; line-height:1.8;">
-        <h3 style="color:#14532d;">✅ Request Submitted Successfully</h3>
-        <p>Your Request ID:</p>
-        <div style="
-          font-size:22px;
-          font-weight:bold;
-          background:#e6f9ef;
-          padding:10px;
-          border-radius:10px;
-          display:inline-block;
-          color:#0f5132;
-        ">
-          ${requestId}
+          <p>
+            <b>Request ID:</b> ${data.requestId}
+          </p>
+
+          <p>
+            <b>Prescription ID:</b> ${data.id}
+          </p>
+
+          <hr>
+
+          <p>
+            <b>Name:</b> ${data.patientName}
+          </p>
+
+          <p>
+            <b>Mobile:</b> ${data.mobile}
+          </p>
+
+          <p>
+            <b>Age:</b> ${data.age}
+          </p>
+
+          <p>
+            <b>Gender:</b> ${data.gender}
+          </p>
+
+          <p>
+            <b>Symptoms:</b> ${data.symptoms}
+          </p>
+
+          <hr>
+
+          <p>
+            <b>Doctor:</b> ${data.doctorName}
+          </p>
+
+          <p>
+            <b>Medicine:</b> ${data.medicine}
+          </p>
+
+          <p>
+            <b>Dosage:</b> ${data.dosage}
+          </p>
+
+          <p>
+            <b>Days:</b> ${data.days}
+          </p>
+
+          <p>
+            <b>Advice:</b>
+            ${data.advice || "No advice"}
+          </p>
+
+          <hr>
+
+          <p>
+            <b>Date:</b> ${date}
+          </p>
+
+          <p>
+            <b>Time:</b> ${time}
+          </p>
+
         </div>
-        <p style="margin-top:10px;">
-          📲 Doctor will notify you after approval.
-        </p>
-      </div>
-    `;
+      `;
 
-        document.getElementById("requestId").value = requestId;
+    } catch (error) {
 
-      } catch (error) {
+      console.log(error);
 
-        responseBox.innerText = "❌ Error: Server not running / CORS issue";
-
-      }
+      responseBox.innerHTML = `
+        <b style="color:red;">
+          ❌ Server Error
+        </b>
+      `;
 
     }
 
+  }
 
 
-    // ================= GET PRESCRIPTION =================
-    async function getPrescription() {
+  /* =========================================================
+     DOWNLOAD PDF
+  ========================================================= */
 
-      const requestId = document.getElementById("requestId").value;
-      const responseBox = document.getElementById("responseBox");
+  function downloadPrescriptionPDF() {
 
-      if (!requestId) {
-        responseBox.innerText = "⚠️ Please enter Request ID";
-        return;
-      }
+    if (!lastPrescriptionData) {
 
-      responseBox.innerText = "⏳ Fetching prescription...";
+      alert(
+        "⚠️ Please fetch prescription first."
+      );
 
-      try {
-
-        // ===== NEW UPDATE =====
-        const res = await fetch(`${API_BASE}/api/patient/prescription/${requestId}`);
-
-        if (!res.ok) {
-
-          lastPrescriptionData = null;
-
-          responseBox.innerHTML = `<b style="color:red;">❌ Prescription not found</b>`;
-
-          return;
-
-        }
-
-        const data = await res.json();
-
-        lastPrescriptionData = data;
-
-        const dateObj = new Date(data.createdAt);
-        const date = dateObj.toLocaleDateString("en-GB");
-        const time = dateObj.toLocaleTimeString("en-IN", { hour12: false });
-
-        responseBox.innerHTML = `
-      <div style="font-size:15px; line-height:1.8;">
-        <h2>💊 Prescription Report</h2>
-        <p><b>Request ID:</b> ${data.requestId}</p>
-        <p><b>Prescription ID:</b> ${data.id}</p>
-        <hr>
-        <p><b>Name:</b> ${data.patientName}</p>
-        <p><b>Mobile:</b> ${data.mobile}</p>
-        <p><b>Age:</b> ${data.age}</p>
-        <p><b>Gender:</b> ${data.gender}</p>
-        <p><b>Symptoms:</b> ${data.symptoms}</p>
-        <hr>
-        <p><b>Doctor:</b> ${data.doctorName}</p>
-        <p><b>Medicine:</b> ${data.medicine}</p>
-        <p><b>Dosage:</b> ${data.dosage}</p>
-        <p><b>Days:</b> ${data.days}</p>
-        <p><b>Advice:</b> ${data.advice || "No advice"}</p>
-        <hr>
-        <p><b>Date:</b> ${date}</p>
-        <p><b>Time:</b> ${time}</p>
-      </div>
-    `;
-
-      } catch (error) {
-
-        responseBox.innerHTML = `<b style="color:red;">❌ Server error</b>`;
-
-      }
-
+      return;
     }
 
-    // ================= DOWNLOAD PRESCRIPTION PDF =================
-    function downloadPrescriptionPDF() {
-      if (!lastPrescriptionData) {
-        alert("⚠️ No prescription to download. Please get prescription first.");
-        return;
-      }
 
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
+    const { jsPDF } = window.jspdf;
 
-      const data = lastPrescriptionData;
-      const dateObj = new Date(data.createdAt || Date.now());
-      const date = dateObj.toLocaleDateString("en-GB");
-      const time = dateObj.toLocaleTimeString("en-IN", { hour12: false });
+    const doc = new jsPDF();
 
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(22);
-      doc.setTextColor(15, 81, 50);
-      doc.text("MedBuddy - Prescription", 105, 20, null, null, "center");
+    const data = lastPrescriptionData;
 
-      doc.setFontSize(12);
-      doc.setTextColor(0, 0, 0);
-      doc.setFont("helvetica", "normal");
 
-      let y = 40;
-      doc.text(`Request ID: ${data.requestId}`, 20, y);
-      doc.text(`Prescription ID: ${data.id || 'N/A'}`, 120, y);
+    const dateObj =
+      new Date(data.createdAt || Date.now());
 
-      y += 10;
-      doc.line(20, y, 190, y);
-      y += 10;
+    const date =
+      dateObj.toLocaleDateString("en-GB");
 
-      doc.setFont("helvetica", "bold");
-      doc.text("Patient Details", 20, y);
-      doc.setFont("helvetica", "normal");
-      y += 10;
-      doc.text(`Name: ${data.patientName || 'N/A'}`, 20, y);
-      doc.text(`Age: ${data.age || 'N/A'}`, 120, y);
-      y += 10;
-      doc.text(`Gender: ${data.gender || 'N/A'}`, 20, y);
-      doc.text(`Mobile: ${data.mobile || 'N/A'}`, 120, y);
-      y += 10;
+    const time =
+      dateObj.toLocaleTimeString("en-IN", {
+        hour12: false
+      });
 
-      // Handle multi-line symptoms
-      const symptomsLines = doc.splitTextToSize(`Symptoms: ${data.symptoms || 'N/A'}`, 170);
-      doc.text(symptomsLines, 20, y);
-      y += (symptomsLines.length * 7);
 
-      y += 5;
-      doc.line(20, y, 190, y);
-      y += 10;
+    /* HEADER */
 
-      doc.setFont("helvetica", "bold");
-      doc.text("Prescription Details", 20, y);
-      doc.setFont("helvetica", "normal");
-      y += 10;
-      doc.text(`Doctor: ${data.doctorName || 'N/A'}`, 20, y);
-      y += 10;
+    doc.setFont("helvetica", "bold");
 
-      const medicineLines = doc.splitTextToSize(`Medicine: ${data.medicine || 'N/A'}`, 170);
-      doc.text(medicineLines, 20, y);
-      y += (medicineLines.length * 7);
+    doc.setFontSize(22);
 
-      doc.text(`Dosage: ${data.dosage || 'N/A'}`, 20, y);
-      y += 10;
-      doc.text(`Days: ${data.days || 'N/A'}`, 20, y);
-      y += 10;
+    doc.setTextColor(15, 81, 50);
 
-      const adviceLines = doc.splitTextToSize(`Advice: ${data.advice || 'None'}`, 170);
-      doc.text(adviceLines, 20, y);
-      y += (adviceLines.length * 7);
+    doc.text(
+      "MedBuddy Prescription",
+      105,
+      20,
+      null,
+      null,
+      "center"
+    );
 
-      y += 5;
-      doc.line(20, y, 190, y);
-      y += 10;
 
-      doc.text(`Date: ${date}`, 20, y);
-      doc.text(`Time: ${time}`, 120, y);
+    doc.setFont("helvetica", "normal");
 
-      doc.save(`Prescription_${data.requestId}.pdf`);
-    }
+    doc.setTextColor(0, 0, 0);
 
-  </script>
+    doc.setFontSize(12);
+
+
+    let y = 40;
+
+
+    doc.text(
+      `Request ID: ${data.requestId}`,
+      20,
+      y
+    );
+
+    doc.text(
+      `Prescription ID: ${data.id || "N/A"}`,
+      120,
+      y
+    );
+
+    y += 10;
+
+
+    doc.line(20, y, 190, y);
+
+    y += 10;
+
+
+    /* PATIENT DETAILS */
+
+    doc.setFont("helvetica", "bold");
+
+    doc.text("Patient Details", 20, y);
+
+    y += 10;
+
+    doc.setFont("helvetica", "normal");
+
+
+    doc.text(
+      `Name: ${data.patientName || "N/A"}`,
+      20,
+      y
+    );
+
+    doc.text(
+      `Age: ${data.age || "N/A"}`,
+      120,
+      y
+    );
+
+    y += 10;
+
+
+    doc.text(
+      `Gender: ${data.gender || "N/A"}`,
+      20,
+      y
+    );
+
+    doc.text(
+      `Mobile: ${data.mobile || "N/A"}`,
+      120,
+      y
+    );
+
+    y += 10;
+
+
+    const symptomsLines =
+      doc.splitTextToSize(
+        `Symptoms: ${data.symptoms || "N/A"}`,
+        170
+      );
+
+    doc.text(symptomsLines, 20, y);
+
+    y += symptomsLines.length * 7;
+
+
+    y += 5;
+
+    doc.line(20, y, 190, y);
+
+    y += 10;
+
+
+    /* PRESCRIPTION */
+
+    doc.setFont("helvetica", "bold");
+
+    doc.text("Prescription Details", 20, y);
+
+    y += 10;
+
+    doc.setFont("helvetica", "normal");
+
+
+    doc.text(
+      `Doctor: ${data.doctorName || "N/A"}`,
+      20,
+      y
+    );
+
+    y += 10;
+
+
+    const medicineLines =
+      doc.splitTextToSize(
+        `Medicine: ${data.medicine || "N/A"}`,
+        170
+      );
+
+    doc.text(medicineLines, 20, y);
+
+    y += medicineLines.length * 7;
+
+
+    doc.text(
+      `Dosage: ${data.dosage || "N/A"}`,
+      20,
+      y
+    );
+
+    y += 10;
+
+
+    doc.text(
+      `Days: ${data.days || "N/A"}`,
+      20,
+      y
+    );
+
+    y += 10;
+
+
+    const adviceLines =
+      doc.splitTextToSize(
+        `Advice: ${data.advice || "None"}`,
+        170
+      );
+
+    doc.text(adviceLines, 20, y);
+
+    y += adviceLines.length * 7;
+
+
+    y += 5;
+
+    doc.line(20, y, 190, y);
+
+    y += 10;
+
+
+    doc.text(`Date: ${date}`, 20, y);
+
+    doc.text(`Time: ${time}`, 120, y);
+
+
+    doc.save(
+      `Prescription_${data.requestId}.pdf`
+    );
+
+  }
+
+</script>
 
 </body>
 
